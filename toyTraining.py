@@ -11,49 +11,61 @@ def nonlin(x, derivative=False):
 
 def main():
     print " In the main program "
+    inputNumber = 2
+    hiddenNumber = 4
+    outpuNumber = 1
+    learningRate = 1
+    numberOfIterations = 10000
     inputData = np.array(  [  [1.0,0.0],[0.0,1.0],[-1.0,0.0],[0.0,-1.0],[0.5,0.5],[-0.5,0.5],[0.5,-0.5],[-0.5,-0.5] ] )
     outputData = np.array( [ [1,1,1,1,0,0,0,0] ] ).T
-    # outputData = np.array([[1], [1], [1], [1], [0], [0], [0], [0]])
     np.random.seed(1)
 
     #intial Value of weights a 2*1 matrix
-    synisodalFunction = np.random.random((2,8))
-    synisodalFunction2 = np.random.random((8,1))
+    # weight = 2*np.random.random((2,4)) -1
+    #
+    # weight2 = 2*np.random.random((4,1)) - 1
+    # weight = np.random.randn(2,4)
+    # weight2 = np.random.randn(4,1)
+    input_range = 1.0 / inputNumber** (1 / 2)
+    output_range = 1.0 / hiddenNumber ** (1 / 2)
 
-    for iterationNumber in xrange(10000):
+    #weights for layer 1(hidden Layer) and layer 2(output layer)
+    weight = np.random.normal(loc=0, scale=input_range, size=(inputNumber, hiddenNumber))
+    weight2 = np.random.normal(loc=0, scale=input_range, size=(hiddenNumber, outpuNumber))
+
+    #Baise is necessary
+    baise = np.random.normal(loc=0, scale=input_range, size=(8, hiddenNumber))
+    baise2= np.random.normal(loc=0, scale=input_range, size=(8,outpuNumber))
+
+    for iterationNumber in xrange(numberOfIterations):
+
         layer0 = inputData
-        layer1 = nonlin(np.dot(layer0,synisodalFunction))
-        layer2 = nonlin(np.dot(layer1, synisodalFunction2))
+        netLayer1 =  np.add(np.dot(layer0, weight ), baise)
+        layer1 = nonlin(netLayer1)
+
+        netLayer2 = np.add( np.dot(layer1, weight2), baise2)
+        layer2 = nonlin(netLayer2)
 
         layer2_error = outputData - layer2
 
-        # if (iterationNumber%100 == 0):
-        #     print "Error: " + str(np.mean(np.abs(layer2_error)))
-        #     print "synisodalFunction: " + str(synisodalFunction)
-        #     print "synisodalFunction2:" + str(synisodalFunction2)
-
-
+        #Propogating error backword with gradient
         layer2_delta = layer2_error * nonlin(layer2, derivative=True)
 
+        layer1_error = layer2_delta.dot(weight2.T)
 
-        if iterationNumber == 1:
-            print layer1.shape
-            print layer2.shape
-            print layer2_error.shape
-            print layer2_delta.shape
+        layer1_delta = layer1_error * nonlin( layer1 , derivative=True)
 
-        layer1_error = layer2_delta.dot(synisodalFunction2.T)
+        weight += (learningRate)*np.dot(layer0.T,layer1_delta)
+        weight2 += (learningRate)*np.dot(layer1.T, layer2_delta)
 
-        layer1_delta = layer1_error * nonlin( layer1 , True)
-
-        synisodalFunction += np.dot(layer0.T,layer1_delta)
-
-        synisodalFunction2 += np.dot(layer1.T, layer2_delta)
-
+        baise +=  (learningRate)*layer1_delta
+        baise2 += (learningRate)*layer2_delta
 
     # print "Output After Training"
-    print layer1
-    # print synisodalFunction
+    # print layer1
+    # print weight
     print layer2
+
 if __name__ == '__main__':
     main()
+
